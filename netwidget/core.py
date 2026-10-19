@@ -428,10 +428,9 @@ def title_line(snapshot: Dict[str, Any]) -> str:
         name = "离线"
     elif status["reason"] == REASON_DIRECT:
         name = "直连?"
-    elif status.get("label"):
-        name = short_label(status["label"])
     else:
-        name = geo.get("country_code") or "?"
+        # 默认只显示出口国旗；查不到国家时退回节点短名
+        name = flag_emoji(geo.get("country_code")) or short_label(status.get("label") or "") or "?"
     return "%s %s" % (dot, _clean(name))
 
 

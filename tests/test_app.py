@@ -187,7 +187,7 @@ class CollectTest(unittest.TestCase):
         actions = {a: ["/usr/bin/python3", "/p/netwidget.10s.py", "--action", a] for a in cli.ACTIONS}
         out = core.render_swiftbar(snap, actions)
         first = out.splitlines()[0]
-        self.assertEqual(first, "🟢 固定A")
+        self.assertEqual(first, "🟢 🇯🇵")
         self.assertEqual(out.splitlines()[1], "---")
         self.assertIn("Quantumult X 进程：运行中", out)
         self.assertIn("utun4 198.18.0.1", out)
