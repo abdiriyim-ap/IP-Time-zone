@@ -1,0 +1,80 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  unit:
+    name: unit (${{ matrix.os }}, py${{ matrix.python }})
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 10
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { os: ubuntu-latest, python: "3.9" }
+          - { os: ubuntu-latest, python: "3.13" }
+          - { os: macos-latest, python: "3.13" }
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python }}
+      - name: Byte-compile
+        run: python -m compileall -q netwidget plugin tests
+      - name: Unit tests
+        run: python -m unittest discover -s tests -t . -v
+
+  macos-live:
+    name: macOS live run (real network)
+    runs-on: macos-latest
+    timeout-minutes: 10
+    env:
+      NETWIDGET_CONFIG: ${{ github.workspace }}/config.example.json
+      NETWIDGET_CACHE_DIR: ${{ runner.temp }}/nw-cache
+      NETWIDGET_STATE_DIR: ${{ runner.temp }}/nw-state
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Unit tests with macOS system Python (/usr/bin/python3)
+        run: |
+          if [ -x /usr/bin/python3 ]; then
+            /usr/bin/python3 --version
+            /usr/bin/python3 -m unittest discover -s tests -t .
+          else
+            echo "no /usr/bin/python3 on this image, skipped"
+          fi
+
+      - name: Interface counters seen by the plugin
+        run: netstat -ib | awk 'NR==1 || $3 ~ /^<Link#/'
+
+      - name: SwiftBar output (example whitelist → expected 🟡 unknown exit)
+        # --strict: 只有所有出口 IP 接口都失败才让这一步失败；单个接口被限流只会出现在 attempts 里
+        run: python3 plugin/netwidget.10s.py --strict --no-notify
+
+      - name: JSON snapshot
+        run: python3 plugin/netwidget.10s.py --once --json --strict --no-notify | tee "$RUNNER_TEMP/snap.json"
+
+      - name: Whitelist the runner's exit IP → expected 🟢
+        run: |
+          python3 - <<'PY'
+          import json, os
+          snap = json.load(open(os.path.join(os.environ["RUNNER_TEMP"], "snap.json")))
+          tz = (snap.get("geo") or {}).get("timezone")
+          cfg = {"exits": [{"ip": snap["ip"], "label": "GitHub-Runner", "expect_tz": tz}],
+                 "real_ip_hints": ["192.0.2.0/24"]}
+          json.dump(cfg, open(os.path.join(os.environ["RUNNER_TEMP"], "runner.json"), "w"))
+          PY
+          export NETWIDGET_CONFIG="$RUNNER_TEMP/runner.json"
+          python3 plugin/netwidget.10s.py --strict --no-notify | tee "$RUNNER_TEMP/green.txt"
+          head -1 "$RUNNER_TEMP/green.txt" | grep -q '^🟢 ' || { echo "expected green status"; exit 1; }
