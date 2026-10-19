@@ -195,6 +195,9 @@ class CollectTest(unittest.TestCase):
         self.assertIn('param3="refresh" terminal=false refresh=true', out)
         for line in out.splitlines():
             self.assertLessEqual(line.count("|"), 1, line)
+        # 出口与本机时区不同是正常的，不再提示；出口与白名单预期一致时给出确认
+        self.assertNotIn("系统时区不一致", out)
+        self.assertIn("✅ 出口 IP 与时区都和代理一致（Asia/Tokyo）", out)
 
     def test_render_offline(self):
         snap = self.run_once(FakeHttp({}))

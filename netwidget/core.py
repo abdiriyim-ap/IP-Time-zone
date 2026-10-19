@@ -469,8 +469,14 @@ def render_swiftbar(snapshot: Dict[str, Any], actions: Optional[Dict[str, Sequen
     if sys_tz:
         out.append("本机  %s  %s %s  %s | %s" % (sys_tz["tz"], sys_tz["date"][5:], sys_tz["time"],
                                               sys_tz["offset"], mono))
-    if tzinfo.get("mismatch"):
-        out.append("⚠️ 出口时区与系统时区不一致（出差常见，仅提示） | color=%s" % warn)
+    # 出口和本机时区不同是正常的（用代理本来就该这样），不再提示。
+    # 要盯的是：出口 IP 的地理时区是否和这个固定出口应有的时区一致。
+    exit_entry = status.get("exit") or {}
+    if status.get("reason") == REASON_WHITELISTED and exit_entry.get("expect_tz"):
+        tz_warned = any("时区" in (w or "") for w in status.get("warnings") or [])
+        if not tz_warned:
+            out.append("✅ 出口 IP 与时区都和代理一致（%s） | color=%s"
+                       % (_clean(exit_entry["expect_tz"]), color))
 
     out.append("---")
     speed = snapshot.get("speed") or {}
