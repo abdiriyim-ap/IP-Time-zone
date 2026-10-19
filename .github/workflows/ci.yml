@@ -39,12 +39,14 @@ jobs:
     name: macOS live run (real network)
     runs-on: macos-latest
     timeout-minutes: 10
-    env:
-      NETWIDGET_CONFIG: ${{ github.workspace }}/config.example.json
-      NETWIDGET_CACHE_DIR: ${{ runner.temp }}/nw-cache
-      NETWIDGET_STATE_DIR: ${{ runner.temp }}/nw-state
     steps:
       - uses: actions/checkout@v4
+
+      - name: Isolated config / cache paths
+        run: |
+          echo "NETWIDGET_CONFIG=$GITHUB_WORKSPACE/config.example.json" >> "$GITHUB_ENV"
+          echo "NETWIDGET_CACHE_DIR=$RUNNER_TEMP/nw-cache" >> "$GITHUB_ENV"
+          echo "NETWIDGET_STATE_DIR=$RUNNER_TEMP/nw-state" >> "$GITHUB_ENV"
 
       - name: Unit tests with macOS system Python (/usr/bin/python3)
         run: |
