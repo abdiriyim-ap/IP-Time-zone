@@ -409,21 +409,30 @@ def action_params(cmd: Sequence[str], refresh: bool = False) -> str:
     return " ".join(parts)
 
 
+def short_label(label: str) -> str:
+    """菜单栏用的短名：取最后一个 "-" 之后的部分，如 "美国-US3" -> "US3"。"""
+    label = (label or "").strip()
+    if "-" in label:
+        tail = label.rsplit("-", 1)[1].strip()
+        if tail:
+            return tail
+    return label
+
+
 def title_line(snapshot: Dict[str, Any]) -> str:
+    """菜单栏标题保持很短（刘海屏放不下会被系统隐藏），网速等细节放在下拉菜单。"""
     status = snapshot["status"]
     geo = snapshot.get("geo") or {}
     dot = DOTS[status["level"]]
     if status["reason"] == REASON_OFFLINE:
-        name, flag = "离线", "🌐"
+        name = "离线"
+    elif status["reason"] == REASON_DIRECT:
+        name = "直连?"
+    elif status.get("label"):
+        name = short_label(status["label"])
     else:
-        flag = flag_emoji(geo.get("country_code"))
-        name = status.get("label") or geo.get("country_code") or snapshot.get("ip") or "?"
-        if status["reason"] == REASON_DIRECT:
-            name = "直连?"
-    speed = snapshot.get("speed") or {}
-    down = format_rate(speed.get("down_bps"), compact=True)
-    up = format_rate(speed.get("up_bps"), compact=True)
-    return "%s %s %s ↓%s ↑%s" % (dot, flag, _clean(name), down, up)
+        name = geo.get("country_code") or "?"
+    return "%s %s" % (dot, _clean(name))
 
 
 def render_swiftbar(snapshot: Dict[str, Any], actions: Optional[Dict[str, Sequence[str]]] = None) -> str:
