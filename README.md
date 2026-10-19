@@ -78,7 +78,7 @@ python3 ~/Code/IP-Time-zone/plugin/netwidget.10s.py --json    # 完整 JSON 快�
     {"ip": "203.0.113.64/29", "label": "洛杉矶-固定段", "expect_tz": "America/Los_Angeles"}
   ],
   "real_ip_hints": ["192.0.2.0/24"],
-  "refresh_ip_seconds": 60,
+  "refresh_ip_seconds": 10,
   "notify": true
 }
 ```
@@ -89,7 +89,7 @@ python3 ~/Code/IP-Time-zone/plugin/netwidget.10s.py --json    # 完整 JSON 快�
 | `exits[].label` | 菜单栏显示的名字 |
 | `exits[].expect_tz` | 这个出口应该在的时区（IANA 名）。地理接口查不到时区时用它兜底；查到的时区和它不一致时在面板里提示 |
 | `real_ip_hints` | 你的直连网络出口网段（家宽、公司、手机热点……），出口落在这里就判定为 🔴 疑似直连 |
-| `refresh_ip_seconds` | 多久重新查一次出口 IP，默认 60，最小 15 |
+| `refresh_ip_seconds` | 多久重新查一次出口 IP，默认 10，最小 10 |
 | `notify` | 是否弹系统通知 |
 
 `real_ip_hints` 怎么填：临时关掉代理，访问 <https://ipinfo.io> 看一下自己的 IP，填它所在的网段（比如运营商给的 IP 经常变，填 `/16` 或 `/24` 更稳）。
@@ -99,7 +99,7 @@ python3 ~/Code/IP-Time-zone/plugin/netwidget.10s.py --json    # 完整 JSON 快�
 ## 工作方式
 
 - 插件文件名里的 `10s` 是 SwiftBar 刷新间隔：网速每 10 秒更新（10 秒平均值）。第一次运行会现场采样 1 秒。
-- 出口 IP 默认 60 秒查一次（离线时每次都重试）：先用轻量接口查 IP（ipify → checkip.amazonaws.com），再按 IP 查地理信息（ipwho.is → ip-api.com → ipinfo.io），任何一家失败/限流就换下一家。同一个 IP 的地理信息缓存 24 小时。
+- 出口 IP 默认 10 秒查一次（离线时每次都重试）：先用轻量接口查 IP（ipify → checkip.amazonaws.com），再按 IP 查地理信息（ipwho.is → ip-api.com → ipinfo.io），任何一家失败/限流就换下一家。同一个 IP 的地理信息缓存 24 小时。
 - 网速只统计物理网卡（en*），不算 utun，避免 TUN 和物理网卡重复计数。
 - 缓存：`~/Library/Caches/netwidget/`；历史：`~/Library/Application Support/netwidget/history.log`。
 

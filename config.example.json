@@ -8,6 +8,6 @@
   "real_ip_hints": [
     "192.0.2.0/24"
   ],
-  "refresh_ip_seconds": 60,
+  "refresh_ip_seconds": 10,
   "notify": true
 }

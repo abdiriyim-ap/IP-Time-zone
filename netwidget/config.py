@@ -12,7 +12,7 @@ from .core import get_zone, normalize_ip
 DEFAULTS: Dict[str, Any] = {
     "exits": [],
     "real_ip_hints": [],
-    "refresh_ip_seconds": 60,
+    "refresh_ip_seconds": 10,
     "notify": True,
 }
 
@@ -92,7 +92,7 @@ def validate(raw: Any) -> Tuple[Dict[str, Any], List[str]]:
     cfg["real_ip_hints"] = hints
 
     try:
-        cfg["refresh_ip_seconds"] = max(15, int(raw.get("refresh_ip_seconds", DEFAULTS["refresh_ip_seconds"])))
+        cfg["refresh_ip_seconds"] = max(10, int(raw.get("refresh_ip_seconds", DEFAULTS["refresh_ip_seconds"])))
     except (TypeError, ValueError):
         errors.append("refresh_ip_seconds 必须是整数")
     cfg["notify"] = bool(raw.get("notify", True))

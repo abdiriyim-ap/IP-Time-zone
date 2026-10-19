@@ -77,17 +77,17 @@ class CollectTest(unittest.TestCase):
         with open(self.paths.history, encoding="utf-8") as f:
             self.assertIn("首次记录 → 203.0.113.10(东京-固定A)", f.read())
 
-    def test_ip_cached_for_60s_and_geo_for_24h(self):
+    def test_ip_cached_for_refresh_interval_and_geo_for_24h(self):
         http = FakeHttp({"ipify": json.dumps({"ip": "203.0.113.10"}), "ipwho.is": IPWHO})
         self.run_once(http)
         n = len(http.calls)
-        self.t[0] += 10
+        self.t[0] += 5
         snap = self.run_once(http)
-        self.assertEqual(len(http.calls), n)          # 60 秒内不再联网
+        self.assertEqual(len(http.calls), n)          # 刷新间隔（默认 10 秒）内不再联网
         self.assertFalse(snap["source"]["refreshed"])
         self.assertEqual(self.slept, [1.0])           # 第二次用上次的计数算网速
-        self.assertAlmostEqual(snap["speed"]["down_bps"], 1024.0)
-        self.t[0] += 60
+        self.assertAlmostEqual(snap["speed"]["down_bps"], 2048.0)  # 间隔 5 秒
+        self.t[0] += 5
         snap = self.run_once(http)
         self.assertTrue(snap["source"]["refreshed"])
         self.assertEqual(http.calls[n:], ["https://api.ipify.org?format=json"])  # 地理信息走缓存
@@ -215,7 +215,7 @@ class ConfigTest(unittest.TestCase):
         self.assertEqual([e["ip"] for e in cfg["exits"]], ["203.0.113.10", "198.51.100.1"])
         self.assertIsNone(cfg["exits"][1]["expect_tz"])
         self.assertEqual(cfg["real_ip_hints"], ["192.0.2.0/24"])
-        self.assertEqual(cfg["refresh_ip_seconds"], 15)
+        self.assertEqual(cfg["refresh_ip_seconds"], 10)
         self.assertEqual(len(errors), 4)
 
     def test_example_config_is_valid_and_uses_documentation_ips(self):

@@ -101,7 +101,7 @@ def collect(paths: Optional[Paths] = None, *, force: bool = False, notify: bool 
     now = datetime.fromtimestamp(now_ts, timezone.utc)
     checked = state.get("ip_checked_at")
     need = (force or checked is None or not state.get("ip")
-            or now_ts - float(checked) >= cfg["refresh_ip_seconds"])
+            or now_ts - float(checked) >= cfg["refresh_ip_seconds"] - 2)  # 留 2 秒余量，避免和 SwiftBar 的 10 秒周期错开一轮
 
     if need:
         fresh = _refresh_ip(get, now_ts, geo_cache)
