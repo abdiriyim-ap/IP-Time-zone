@@ -189,6 +189,17 @@ def describe_tz(name: Optional[str], now: Optional[datetime] = None) -> Optional
     }
 
 
+def describe_fixed_offset(offset_seconds: int, label: str, now: Optional[datetime] = None) -> Dict[str, Any]:
+    """系统时区名拿不到时的兜底：只按 UTC 偏移显示。"""
+    now = now or datetime.now(timezone.utc)
+    if now.tzinfo is None:
+        now = now.replace(tzinfo=timezone.utc)
+    delta = timedelta(seconds=int(offset_seconds))
+    local = now.astimezone(timezone(delta))
+    return {"tz": label, "time": local.strftime("%H:%M"), "date": local.strftime("%Y-%m-%d"),
+            "offset": format_offset(delta), "offset_seconds": int(offset_seconds)}
+
+
 def same_utc_offset(tz_a: Optional[str], tz_b: Optional[str], now: Optional[datetime] = None) -> bool:
     """两个时区此刻 UTC 偏移是否相同（Asia/Shanghai 与 Asia/Chongqing 视为相同）。
 

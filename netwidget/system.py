@@ -48,19 +48,33 @@ def sample_counters() -> Dict[str, object]:
     return {"ts": time.time(), "rx": rx, "tx": tx, "ifaces": used, "names": names}
 
 
+def _zone_from_link(path: str) -> Optional[str]:
+    """/etc/localtime → .../zoneinfo/Asia/Shanghai → Asia/Shanghai"""
+    targets = []
+    try:
+        targets.append(os.readlink(path))
+    except OSError:
+        pass
+    try:
+        targets.append(os.path.realpath(path))
+    except OSError:
+        pass
+    marker = "zoneinfo/"
+    for target in targets:
+        if marker in target:
+            name = target.rsplit(marker, 1)[1]
+            if core.get_zone(name) is not None:
+                return name
+    return None
+
+
 def system_timezone() -> Optional[str]:
     tz = os.environ.get("TZ", "").lstrip(":")
     if tz and core.get_zone(tz) is not None:
         return tz
-    try:
-        target = os.path.realpath("/etc/localtime")
-    except OSError:
-        target = ""
-    marker = "zoneinfo/"
-    if marker in target:
-        name = target.split(marker, 1)[1]
-        if core.get_zone(name) is not None:
-            return name
+    name = _zone_from_link("/etc/localtime")
+    if name:
+        return name
     if os.path.exists("/etc/timezone"):
         try:
             with open("/etc/timezone") as f:
@@ -69,7 +83,19 @@ def system_timezone() -> Optional[str]:
                 return name
         except OSError:
             pass
+    if IS_MAC:  # 不需要管理员权限的兜底
+        code, out = run([_bin("readlink", "/usr/bin/readlink"), "/etc/localtime"])
+        if code == 0 and "zoneinfo/" in out:
+            name = out.strip().rsplit("zoneinfo/", 1)[1]
+            if core.get_zone(name) is not None:
+                return name
     return None
+
+
+def local_offset_seconds() -> int:
+    """拿不到时区名时，至少用本机 UTC 偏移。"""
+    lt = time.localtime()
+    return int(getattr(lt, "tm_gmtoff", 0) or 0)
 
 
 def quantumult_x_running() -> Optional[bool]:

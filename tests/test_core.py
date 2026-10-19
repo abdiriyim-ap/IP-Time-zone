@@ -174,6 +174,10 @@ class TimezoneTest(unittest.TestCase):
         self.assertTrue(core.same_utc_offset("Asia/Shanghai", "Asia/Singapore", NOW))
         self.assertFalse(core.same_utc_offset("Asia/Shanghai", "Asia/Tokyo", NOW))
 
+    def test_fixed_offset_fallback(self):
+        d = core.describe_fixed_offset(8 * 3600, "本地", NOW)
+        self.assertEqual((d["time"], d["offset"], d["offset_seconds"]), ("12:00", "UTC+8", 28800))
+
     def test_naive_now_is_utc(self):
         self.assertEqual(core.describe_tz("Asia/Tokyo", NOW.replace(tzinfo=None))["time"], "13:00")
 

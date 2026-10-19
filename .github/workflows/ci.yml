@@ -57,8 +57,11 @@ jobs:
             echo "no /usr/bin/python3 on this image, skipped"
           fi
 
-      - name: Interface counters seen by the plugin
-        run: netstat -ib | awk 'NR==1 || $3 ~ /^<Link#/'
+      - name: Interface counters / timezone seen by the plugin
+        run: |
+          netstat -ib | awk 'NR==1 || $3 ~ /^<Link#/'
+          ls -l /etc/localtime || echo "no /etc/localtime"
+          python3 -c "from netwidget import system; print('system_timezone =', system.system_timezone(), '| offset =', system.local_offset_seconds())"
 
       - name: SwiftBar output (example whitelist → expected 🟡 unknown exit)
         # --strict: 只有所有出口 IP 接口都失败才让这一步失败；单个接口被限流只会出现在 attempts 里

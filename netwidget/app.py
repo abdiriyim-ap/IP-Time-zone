@@ -124,6 +124,8 @@ def collect(paths: Optional[Paths] = None, *, force: bool = False, notify: bool 
     exit_tz = core.describe_tz(exit_tz_name, now)
     sys_tz_name = sysmod.system_timezone()
     sys_tz = core.describe_tz(sys_tz_name, now)
+    if sys_tz is None and hasattr(sysmod, "local_offset_seconds"):
+        sys_tz = core.describe_fixed_offset(sysmod.local_offset_seconds(), "（时区名未知）", now)
     timezones = {"exit": exit_tz, "exit_source": exit_src if exit_tz else None, "system": sys_tz,
                  "mismatch": bool(exit_tz and sys_tz and exit_tz["offset_seconds"] != sys_tz["offset_seconds"])}
 

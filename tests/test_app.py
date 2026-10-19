@@ -158,6 +158,14 @@ class CollectTest(unittest.TestCase):
         self.assertEqual(snap["timezones"]["exit"]["tz"], "Asia/Tokyo")
         self.assertEqual(snap["timezones"]["exit_source"], "expect_tz")
 
+    def test_system_tz_unknown_falls_back_to_offset(self):
+        self.sys.system_timezone = lambda: None
+        self.sys.local_offset_seconds = lambda: 3600
+        http = FakeHttp({"ipify": json.dumps({"ip": "203.0.113.10"}), "ipwho.is": IPWHO})
+        snap = self.run_once(http)
+        self.assertEqual(snap["timezones"]["system"]["offset"], "UTC+1")
+        self.assertTrue(snap["timezones"]["mismatch"])
+
     def test_iface_change_resamples(self):
         http = FakeHttp({"ipify": json.dumps({"ip": "203.0.113.10"}), "ipwho.is": IPWHO})
         self.run_once(http)
