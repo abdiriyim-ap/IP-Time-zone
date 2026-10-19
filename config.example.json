@@ -1,0 +1,13 @@
+{
+  "_说明": "复制到 ~/.config/netwidget/exits.json 后改成你自己的固定 IP。这里只用了文档专用 IP（RFC 5737），不是真实地址。",
+  "exits": [
+    {"ip": "203.0.113.10", "label": "东京-固定A", "expect_tz": "Asia/Tokyo"},
+    {"ip": "198.51.100.22", "label": "新加坡-固定B", "expect_tz": "Asia/Singapore"},
+    {"ip": "203.0.113.64/29", "label": "洛杉矶-固定段", "expect_tz": "America/Los_Angeles"}
+  ],
+  "real_ip_hints": [
+    "192.0.2.0/24"
+  ],
+  "refresh_ip_seconds": 60,
+  "notify": true
+}
